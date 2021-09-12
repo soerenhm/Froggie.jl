@@ -1,0 +1,4 @@
+name = "Froggie"
+uuid = "f7628b2b-fe43-49b8-9882-2129b124c64e"
+authors = ["Søren Hanghøj Møller <smller@uottawa.ca>"]
+version = "0.1.0"
