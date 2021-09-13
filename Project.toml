@@ -2,3 +2,7 @@ name = "Froggie"
 uuid = "f7628b2b-fe43-49b8-9882-2129b124c64e"
 authors = ["Søren Hanghøj Møller <smller@uottawa.ca>"]
 version = "0.1.0"
+
+[deps]
+AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"

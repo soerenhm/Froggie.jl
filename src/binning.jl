@@ -1,5 +1,7 @@
 """
+    binalong(a, nbins) -> Vector
     binalong(a, dim::Int, nbins) -> Array
+    binalong(a, x::AbstractVector, nbins) -> Vector
     binalong(a, x::AbstractVector, dim::Int, nbins) -> Array
     binalong(a::AxisArray, dim::Int, nbins) -> AxisArray
     binalong(a::AxisArray, ax::Axis, nbins) -> AxisArray
@@ -8,15 +10,23 @@ Arrange the elements of `a` along dimension `dim` into `n` bins.
 
 If coordinates vector `x` is supplied, the bins are arranged 
 uniformly over `x` (instead of uniformly over the indices of `a`).
+
+Endpoints are handled simply by assuming that `a` has the same value
+outside its bounds; this means that the binned value at the endpoint 
+always has the same value as the endpoint of `a`.
 """
 function binalong(a, x::AbstractVector, dim::Int, nbins)
   @boundscheck size(a, dim) == length(x)
   Ipre = CartesianIndices(size(a)[1:dim-1])
   Ipost = CartesianIndices(size(a)[dim+1:end])
-  b = zeros(eltype(a), size(Ipre)..., nbins, size(Ipost)...)
+  T = promote_type(float(eltype(a)), float(eltype(x)))
+  b = zeros(T, size(Ipre)..., nbins, size(Ipost)...)
   _binarray!(b, a, x, range(x[1], x[end], length=nbins), Ipre, nbins, Ipost)
 end
-binalong(a, dim::Integer, nbins) = binalong(a, 1:length(a), dim, nbins)
+binalong(a, dim::Integer, nbins) = binalong(a, axes(a, dim), dim, nbins)
+# binalong(a::AbstractVector, nbins) = binalong(a, 1, nbins)
+binalong(a, nbins) = binalong(vec(a), 1, nbins)
+binalong(a, x::AbstractVector, nbins) = binalong(vec(a), x, 1, nbins)
 
 function binalong(a::AxisArray, dim::Int, nbins)
   x = AxisArrays.axes(a, dim)

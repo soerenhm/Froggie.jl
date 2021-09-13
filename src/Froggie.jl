@@ -1,11 +1,11 @@
 module Froggie
 
-
-using AxisArrays, Unitful, DelimitedFiles, JSON
-
+using AxisArrays, Unitful
 const axes = Base.axes  # due to possible conflict with AxisArrays.axes
 
 
-greet() = print("Hello World!")
+include("binning.jl")
+
+export binalong
 
 end # module
