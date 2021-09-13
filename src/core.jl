@@ -11,7 +11,7 @@ function frogtrace(data::AbstractMatrix, delays::AbstractArray, wavelengths::Abs
   AxisArray(
     data; 
     # Perhaps I shouldn't call `vec2range` here...
-    t = vec2range(enforce_unit(DefaultUnits.delay, delays)), 
+    t = vec2range(enforce_unit(DefaultUnits.time, delays)), 
     λ = vec2range(enforce_unit(DefaultUnits.wavelength, wavelengths))
   )
 end
@@ -38,6 +38,6 @@ function freqdomain(data::AxisArray)
   AxisArray(
     new_data;
     t = AxisArrays.axes(data, Axis{:t}),
-    ω = enforce_unit(unit, ω),
+    ω = enforce_unit(DefaultUnits.frequency, ω),
   )
 end
