@@ -17,9 +17,8 @@ given in femtoseconds and nanometers.
 function frogtrace(data::AbstractMatrix, delays::AbstractArray, wavelengths::AbstractArray)
   AxisArray(
     data; 
-    # Perhaps I shouldn't call `vec2range` here...
-    t = vec2range(enforce_unit(DefaultUnits.time, delays)), 
-    λ = vec2range(enforce_unit(DefaultUnits.wavelength, wavelengths))
+    t = enforce_unit(DefaultUnits.time, delays), 
+    λ = enforce_unit(DefaultUnits.wavelength, wavelengths)
   )
 end
 
@@ -32,8 +31,7 @@ function freqdomain(data::AxisArray)
   # check that data has λ axis
   has_wavelength_axis(data) || throw(ArgumentError("`data` does not containt a wavelength axis."))
   
-  λ = data[Axis{:λ}] |> collect
-  ω = wavelen2angfreq.(λ)
+  ω = wavelen2angfreq.(data[Axis{:λ}])
 
   # To convert the spectral content from the spatial domain to the time domain,
   # multiply the trace  by multiply by dλ/dω ∝ 1/ω²
@@ -44,7 +42,7 @@ function freqdomain(data::AxisArray)
 
   AxisArray(
     new_data;
-    t = AxisArrays.axes(data, Axis{:t}),
+    t = data[Axis{:t}],
     ω = enforce_unit(DefaultUnits.frequency, ω),
   )
 end
