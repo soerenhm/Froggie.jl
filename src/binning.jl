@@ -19,12 +19,11 @@ function binalong(a, x::AbstractVector, dim::Int, nbins)
   @boundscheck size(a, dim) == length(x)
   Ipre = CartesianIndices(size(a)[1:dim-1])
   Ipost = CartesianIndices(size(a)[dim+1:end])
-  T = promote_type(float(eltype(a)), float(eltype(x)))
+  T = promote_type(float(eltype(a)), float(eltype(ustrip(x))))
   b = zeros(T, size(Ipre)..., nbins, size(Ipost)...)
   _binarray!(b, a, x, range(x[1], x[end], length=nbins), Ipre, nbins, Ipost)
 end
 binalong(a, dim::Integer, nbins) = binalong(a, axes(a, dim), dim, nbins)
-# binalong(a::AbstractVector, nbins) = binalong(a, 1, nbins)
 binalong(a, nbins) = binalong(vec(a), 1, nbins)
 binalong(a, x::AbstractVector, nbins) = binalong(vec(a), x, 1, nbins)
 
