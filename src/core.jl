@@ -1,3 +1,10 @@
+has_delay_axis(A::AxisArray) = :t in axisnames(A)
+has_frequency_axis(A::AxisArray) = :ω in axisnames(A)
+has_wavelength_axis(A::AxisArray) = :λ in axisnames(A)
+
+is_frog_trace(A::AxisArray) = has_delay_axis(A) && (has_wavelength_axis(A) || has_frequency_axis(A))
+
+
 """
     frogtrace(data::AbstractMatrix, delays, wavelengths) -> AxisArray
 
@@ -23,7 +30,7 @@ Maps the wavelength axis to an angular frequency axis.
 """
 function freqdomain(data::AxisArray)
   # check that data has λ axis
-  :λ in axisnames(data) || throw(ArgumentError("`data` does not containt a wavelength axis."))
+  has_wavelength_axis(data) || throw(ArgumentError("`data` does not containt a wavelength axis."))
   
   λ = data[Axis{:λ}] |> collect
   ω = wavelen2angfreq.(λ)
@@ -40,4 +47,13 @@ function freqdomain(data::AxisArray)
     t = AxisArrays.axes(data, Axis{:t}),
     ω = enforce_unit(DefaultUnits.frequency, ω),
   )
+end
+
+
+function frequencymarginal(A::AxisArray)
+  nothing
+end
+
+function delaymarginal(A::AxisArray)
+  nothing
 end
