@@ -7,6 +7,6 @@ include("utils.jl")
 include("core.jl")
 include("binning.jl")
 
-export binalong
+export frogtrace, freqdomain, binalong
 
 end # module
