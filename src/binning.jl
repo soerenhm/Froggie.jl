@@ -59,3 +59,23 @@ function _binarray!(b, a, x, y, Ipre, n, Ipost)
   b[Ipre, n, Ipost] = a[Ipre, length(x), Ipost]
   b
 end
+
+
+"""
+    integratedim(a, x::AbstractVector, dim::Int)
+"""
+function integratedim(a, x::AbstractVector, dim::Int)
+  @boundscheck size(a, dim) == length(x)
+  T = promote_type(eltype(a), eltype(ustrip(x)))
+  sz = ntuple(n -> n == dim ? 1 : size(a,n), Val(ndims(a)))
+  b = Array{T}(undef, sz...)
+
+end
+
+function integratedim!(b, a, x, dim)
+  fill!(b, 0)
+  J = last(CartesianIndices(b))
+  for I in CartesianIndices(y)
+    
+  end
+end
