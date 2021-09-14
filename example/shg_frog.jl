@@ -11,7 +11,7 @@ meta = open(JSON.parse, metafile)
 
 t = Froggie.center(meta["Data"]["delays"] .|> float) * u"fs"
 λ = (meta["Data"]["wavelengths"] .|> float) * u"nm"
-b = meta["Data"]["background"]
+b = meta["Data"]["background"] .|> float
 
 trace = frogtrace(data .- b', t, λ)
 trace = trace[λ=400u"nm"..480u"nm"]
