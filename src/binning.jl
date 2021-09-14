@@ -1,3 +1,7 @@
+# I think I need to change how I implemented binning
+# What we really care about is resampling to a uniform grid
+# (since we're working with Fourier transforms)
+
 """
     binalong(a, nbins) -> Vector
     binalong(a, dim::Int, nbins) -> Array
@@ -62,20 +66,36 @@ end
 
 
 """
-    integratedim(a, x::AbstractVector, dim::Int)
-"""
-function integratedim(a, x::AbstractVector, dim::Int)
-  @boundscheck size(a, dim) == length(x)
-  T = promote_type(eltype(a), eltype(ustrip(x)))
-  sz = ntuple(n -> n == dim ? 1 : size(a,n), Val(ndims(a)))
-  b = Array{T}(undef, sz...)
+    integrate(y, x::AbstractVector, dim::Int) -> Array
+    integrate(y::AxisArray, dim::Int) -> AxisArray
+    integrate(y::AxisArray, ax) -> AxisArray
 
+Integrates the dimension `dim` of `y` over `x`.
+"""
+function integrate(y, x::AbstractVector, dim::Int)
+  @boundscheck size(y, dim) == length(x)
+  T = typeof(first(y) * first(ustrip(x)))
+  sz = ntuple(n -> n == dim ? 1 : size(y,n), Val(ndims(y)))
+  r = Array{T}(undef, sz...)
+  # Last element of `x` is handled by ignoring it
+  # This is inconsitent with how I implemented binalong...
+  CI = CartesianIndices(ntuple(n -> n == dim ? Base.OneTo(size(y,n)-1) : axes(y,n), Val(ndims(y))))
+  integratedim!(r, y, CI, ustrip(diff(x)), dim)
 end
 
-function integratedim!(b, a, x, dim)
-  fill!(b, 0)
-  J = last(CartesianIndices(b))
-  for I in CartesianIndices(y)
-    
+function integrate(y::AxisArray, dim::Int)
+  x = AxisArrays.axes(y, dim)
+  z = integrate(y.data, x.val, dim)
+  axs = filter(ax -> ax != x, AxisArrays.axes(y))
+  AxisArray(reshape(z, length.(axs)...), axs...)
+end
+integrate(y::AxisArray, ax) = integrate(y, axisdim(y, ax))
+
+function integratedim!(r, y, CI, Δx, dim)
+  fill!(r, 0)
+  J = last(CartesianIndices(r))
+  for I in CI
+    r[min(I,J)] += Δx[I[dim]] * y[I]
   end
+  r
 end
