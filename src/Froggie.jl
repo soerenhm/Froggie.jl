@@ -8,6 +8,6 @@ include("core.jl")
 include("binning.jl")
 
 export AxisArrays, Unitful
-export frogtrace, freqdomain, binalong
+export frogtrace, freqdomain, binalong, integrate, frequencymarginal, delaymarginal
 
 end # module
