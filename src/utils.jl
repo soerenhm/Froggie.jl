@@ -16,10 +16,53 @@ module DefaultUnits
 end
 
 
+"""
+    sample(a, x::AbstractArray, dim::Int, N) -> Array
+    sample(a::AxisArray, ax::Axis, N) -> AxisArray
+    sample(a::AxisArray, dim::Int, N) -> AxisArray
+
+Samples `a` on `N` points uniformly distributed over `x` along 
+a specified axis or dimension of `a`.
+"""
+function sample(a, x::AbstractArray, dim::Int, N)
+  @boundscheck size(a, dim) == length(x)
+  Ipre = CartesianIndices(size(a)[1:dim-1])
+  Ipost = CartesianIndices(size(a)[dim+1:end])
+  T = promote_type(eltype(a), eltype(ustrip(x)))
+  b = zeros(T, size(Ipre)..., N, size(Ipost)...)
+  _sample!(b, a, x, range(first(x), last(x), length=N), Ipre, Ipost)
+end
+
+function sample(a::AxisArray, ax::Axis{name,T}, N) where {name, T}
+  dim = axisdim(a, ax)
+  b = sample(a.data, ax.val, dim, N)
+  x = range(extrema(ax.val)..., length=N)
+  axs = ntuple(n -> n == dim ? Axis{name}(x) : AxisArrays.axes(a,n), Val(ndims(a)))
+  AxisArray(b, axs...)
+end
+sample(a::AxisArray, dim::Int, N) = sample(a, AxisArrays.axes(a, dim), N)
+
+@noinline function _sample!(b, a, x, y, Ipre, Ipost)
+  j = 2
+  for i in 2:length(y)-1
+    while y[i] > x[j]
+      j += 1
+    end
+    t = (y[i]-y[i-1])/(x[j]-x[j-1])
+    b[Ipre, i, Ipost] = t*a[Ipre, j, Ipost] + (1-t)*a[Ipre, j-1, Ipost]
+  end
+  b[Ipre, 1, Ipost] = a[Ipre, 1, Ipost]
+  b[Ipre, length(y), Ipost] = a[Ipre, length(x), Ipost]
+  b
+end
+
 
 """
     zeropad(a, N [dim::Int]) -> Array
     zeropad(a::AxisArray, N [dim::Int]) -> AxisArray
+
+Pads the beginning and end `a` with `N` zeroes. If `dim` is specified,
+the padding is performed only along this dimension.
 """
 zeropad(a, N, dim::Int) = copyto!(_zeropad_dim(a, N, dim)..., a, CartesianIndices(a))
 zeropad(a, N) = copyto!(_zeropad_all(a, N)..., a, CartesianIndices(a))
@@ -39,7 +82,6 @@ function _zeropad_dim(a, N, dim)
   Rdst = CartesianIndices(ntuple(n -> n == dim ? (N+1:N+size(a,n)) : axes(a,n), adims))
   zeros(eltype(a), newsize), Rdst
 end
-
 
 function expand_axis(ax::Axis{name,T}, N) where {name,T}
   dx1 = ax.val[2]-ax.val[1]
