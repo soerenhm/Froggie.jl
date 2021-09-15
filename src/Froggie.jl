@@ -1,12 +1,15 @@
 module Froggie
 
-using AxisArrays, Unitful
+using Reexport
+
+@reexport using AxisArrays, Unitful
 const axes = Base.axes  # due to possible conflict with AxisArrays.axes
 
 include("utils.jl")
 include("core.jl")
 include("binning.jl")
 
-export frogtrace, freqdomain, binalong, integrate, zeropad, frequencymarginal, delaymarginal
+export frogtrace, freqdomain, frequencymarginal, delaymarginal
+export sample, integrate, zeropad
 
 end # module
