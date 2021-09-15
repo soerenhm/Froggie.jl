@@ -48,7 +48,7 @@ sample(a::AxisArray, dim::Int, N) = sample(a, AxisArrays.axes(a, dim), N)
     while y[i] > x[j]
       j += 1
     end
-    t = (y[i]-y[i-1])/(x[j]-x[j-1])
+    t = (y[i]-x[j-1])/(x[j]-x[j-1])
     b[Ipre, i, Ipost] = t*a[Ipre, j, Ipost] + (1-t)*a[Ipre, j-1, Ipost]
   end
   b[Ipre, 1, Ipost] = a[Ipre, 1, Ipost]
