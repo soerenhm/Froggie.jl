@@ -1,7 +1,5 @@
 module Froggie
 
-using Reexport
-
 using AxisArrays, Unitful
 const axes = Base.axes  # due to possible conflict with AxisArrays.axes
 
