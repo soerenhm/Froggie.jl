@@ -86,12 +86,13 @@ end
 function integrate(y::AxisArray, dim::Int)
   x = AxisArrays.axes(y, dim)
   z = integrate(y.data, x.val, dim)
+  # The following is type unstable (because dimension is reduced by one I suppose)
   axs = filter(ax -> ax != x, AxisArrays.axes(y))
   AxisArray(reshape(z, length.(axs)...), axs...)
 end
 integrate(y::AxisArray, ax) = integrate(y, axisdim(y, ax))
 
-function integratedim!(r, y, CI, Δx, dim)
+@noinline function integratedim!(r, y, CI, Δx, dim)
   fill!(r, 0)
   J = last(CartesianIndices(r))
   for I in CI
