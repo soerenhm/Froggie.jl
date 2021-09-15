@@ -1,11 +1,11 @@
 using Revise
-using Froggie, AxisArrays, Unitful, FFTW
+using Froggie, FFTW
 using JSON, DelimitedFiles
 import PyPlot as plt; plt.pygui(true)
 
 
-datafile = joinpath(@__DIR__, "shg-frog_003.dat")
-metafile = joinpath(@__DIR__, "shg-frog_003.json")
+datafile = joinpath(@__DIR__, "shg-frog_001.dat")
+metafile = joinpath(@__DIR__, "shg-frog_001.json")
 
 data = readdlm(datafile)
 meta = open(JSON.parse, metafile)
@@ -18,7 +18,7 @@ trace = frogtrace(data .- b', t, λ)
 trace = trace[λ=400u"nm"..480u"nm"]
 
 freqtrace_ = freqdomain(trace)
-freqtrace = zeropad(binalong(freqtrace_, Axis{:ω}, 256), 128)
+freqtrace = zeropad(binalong(freqtrace_, Axis{:ω}, 128), 128)
 freqtrace.data[findall(freqtrace .< 0)] .= 0.0
 
 

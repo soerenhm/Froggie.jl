@@ -26,6 +26,7 @@ only along dimension `dim` if it is specified.
 zeropad(a, N, dim::Int) = copyto!(_zeropad_dim(a, N, dim)..., a, CartesianIndices(a))
 zeropad(a, N) = copyto!(_zeropad_all(a, N)..., a, CartesianIndices(a))
 zeropad(a::AxisArray, N, dim::Int) = AxisArray(zeropad(a.data, N, dim), expand_axes(a, N, dim)...)
+zeropad(a::AxisArray, N, ax) = zeroopad(a, N, axisdim(a, ax))
 zeropad(a::AxisArray, N) = AxisArray(zeropad(a.data, N), expand_axes(a, N)...)
 
 function _zeropad_all(a, N)
