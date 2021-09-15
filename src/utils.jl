@@ -21,8 +21,8 @@ end
     sample(a::AxisArray, ax::Axis, N) -> AxisArray
     sample(a::AxisArray, dim::Int, N) -> AxisArray
 
-Samples `a` on `N` points uniformly distributed over `x` along 
-a specified axis or dimension of `a`.
+Samples dimension `dim` of `a` on `N` points distributed 
+uniformly over `x`.
 """
 function sample(a, x::AbstractArray, dim::Int, N)
   @boundscheck size(a, dim) == length(x)
@@ -61,8 +61,8 @@ end
     zeropad(a, N [dim::Int]) -> Array
     zeropad(a::AxisArray, N [dim::Int]) -> AxisArray
 
-Pads the beginning and end `a` with `N` zeroes. If `dim` is specified,
-the padding is performed only along this dimension.
+Pads the beginning and end `a` with `N` zeroes. Padding is performed
+only along dimension `dim` if it is specified.
 """
 zeropad(a, N, dim::Int) = copyto!(_zeropad_dim(a, N, dim)..., a, CartesianIndices(a))
 zeropad(a, N) = copyto!(_zeropad_all(a, N)..., a, CartesianIndices(a))
