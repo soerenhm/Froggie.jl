@@ -17,47 +17,6 @@ end
 
 
 """
-    sample(a, x::AbstractArray, dim::Int, N) -> Array
-    sample(a::AxisArray, ax::Axis, N) -> AxisArray
-    sample(a::AxisArray, dim::Int, N) -> AxisArray
-
-Samples dimension `dim` of `a` on `N` points distributed 
-uniformly over `x`.
-"""
-function sample(a, x::AbstractArray, dim::Int, N)
-  @boundscheck size(a, dim) == length(x)
-  Ipre = CartesianIndices(size(a)[1:dim-1])
-  Ipost = CartesianIndices(size(a)[dim+1:end])
-  T = promote_type(eltype(a), eltype(ustrip(x)))
-  b = zeros(T, size(Ipre)..., N, size(Ipost)...)
-  _sample!(b, a, x, range(first(x), last(x), length=N), Ipre, Ipost)
-end
-
-function sample(a::AxisArray, ax::Axis{name,T}, N) where {name, T}
-  dim = axisdim(a, ax)
-  b = sample(a.data, ax.val, dim, N)
-  x = range(extrema(ax.val)..., length=N)
-  axs = ntuple(n -> n == dim ? Axis{name}(x) : AxisArrays.axes(a,n), Val(ndims(a)))
-  AxisArray(b, axs...)
-end
-sample(a::AxisArray, dim::Int, N) = sample(a, AxisArrays.axes(a, dim), N)
-
-@noinline function _sample!(b, a, x, y, Ipre, Ipost)
-  j = 2
-  for i in 2:length(y)-1
-    while y[i] > x[j]
-      j += 1
-    end
-    t = (y[i]-x[j-1])/(x[j]-x[j-1])
-    b[Ipre, i, Ipost] = t*a[Ipre, j, Ipost] + (1-t)*a[Ipre, j-1, Ipost]
-  end
-  b[Ipre, 1, Ipost] = a[Ipre, 1, Ipost]
-  b[Ipre, length(y), Ipost] = a[Ipre, length(x), Ipost]
-  b
-end
-
-
-"""
     zeropad(a, N [dim::Int]) -> Array
     zeropad(a::AxisArray, N [dim::Int]) -> AxisArray
 
@@ -91,3 +50,80 @@ end
 
 expand_axes(a::AxisArray, N) = map(ax -> expand_axis(ax, N), AxisArrays.axes(a))
 expand_axes(a::AxisArray, N, dim::Int) = ntuple(n -> n == dim ? expand_axis(AxisArrays.axes(a,n),N) : AxisArrays.axes(a,n), Val(ndims(a)))
+
+
+"""
+    sample(a, x::AbstractArray, dim::Int, N) -> Array
+    sample(a::AxisArray, ax::Axis, N) -> AxisArray
+    sample(a::AxisArray, dim::Int, N) -> AxisArray
+
+Samples dimension `dim` of `a` on `N` points distributed 
+uniformly over `x`.
+"""
+function sample(a, x::AbstractArray, dim::Int, N)
+  @boundscheck size(a, dim) == length(x)
+  Ipre = CartesianIndices(size(a)[1:dim-1])
+  Ipost = CartesianIndices(size(a)[dim+1:end])
+  T = promote_type(eltype(a), eltype(ustrip(x)))
+  b = zeros(T, size(Ipre)..., N, size(Ipost)...)
+  _sample!(b, a, x, range(first(x), last(x), length=N), Ipre, Ipost)
+end
+function sample(a::AxisArray, ax::Axis{name,T}, N) where {name, T}
+  dim = axisdim(a, ax)
+  b = sample(a.data, ax.val, dim, N)
+  x = range(extrema(ax.val)..., length=N)
+  axs = ntuple(n -> n == dim ? Axis{name}(x) : AxisArrays.axes(a,n), Val(ndims(a)))
+  AxisArray(b, axs...)
+end
+sample(a::AxisArray, dim::Int, N) = sample(a, AxisArrays.axes(a, dim), N)
+
+@noinline function _sample!(b, a, x, y, Ipre, Ipost)
+  j = 2
+  for i in 2:length(y)-1
+    while y[i] > x[j]
+      j += 1
+    end
+    t = (y[i]-x[j-1])/(x[j]-x[j-1])
+    b[Ipre, i, Ipost] = t*a[Ipre, j, Ipost] + (1-t)*a[Ipre, j-1, Ipost]
+  end
+  b[Ipre, 1, Ipost] = a[Ipre, 1, Ipost]
+  b[Ipre, length(y), Ipost] = a[Ipre, length(x), Ipost]
+  b
+end
+
+
+"""
+    integrate(y, x::AbstractVector, dim::Int) -> Array
+    integrate(y::AxisArray, dim::Int) -> AxisArray
+    integrate(y::AxisArray, ax) -> AxisArray
+
+Integrates specified axis in `y` over `x`.
+"""
+function integrate(y, x::AbstractVector, dim::Int)
+  @boundscheck size(y, dim) == length(x)
+  T = typeof(first(y) * first(ustrip(x)))
+  sz = ntuple(n -> n == dim ? 1 : size(y,n), Val(ndims(y)))
+  r = Array{T}(undef, sz...)
+  # Last element of `x` is handled by ignoring it
+  # This is inconsitent with how I implemented binalong...
+  CI = CartesianIndices(ntuple(n -> n == dim ? Base.OneTo(size(y,n)-1) : axes(y,n), Val(ndims(y))))
+  integratedim!(r, y, CI, ustrip(diff(x)), dim)
+end
+
+function integrate(y::AxisArray, dim::Int)
+  x = AxisArrays.axes(y, dim)
+  z = integrate(y.data, x.val, dim)
+  # The following is type unstable (because dimension is reduced by one I suppose)
+  axs = filter(ax -> ax != x, AxisArrays.axes(y))
+  AxisArray(reshape(z, length.(axs)...), axs...)
+end
+integrate(y::AxisArray, ax) = integrate(y, axisdim(y, ax))
+
+@noinline function integratedim!(r, y, CI, Δx, dim)
+  fill!(r, 0)
+  J = last(CartesianIndices(r))
+  for I in CI
+    r[min(I,J)] += Δx[I[dim]] * y[I]
+  end
+  r
+end
