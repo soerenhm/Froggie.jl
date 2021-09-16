@@ -26,7 +26,7 @@ only along dimension `dim` if it is specified.
 zeropad(a, N, dim::Int) = copyto!(_zeropad_dim(a, N, dim)..., a, CartesianIndices(a))
 zeropad(a, N) = copyto!(_zeropad_all(a, N)..., a, CartesianIndices(a))
 zeropad(a::AxisArray, N, dim::Int) = AxisArray(zeropad(a.data, N, dim), expand_axes(a, N, dim)...)
-zeropad(a::AxisArray, N, ax) = zeroopad(a, N, axisdim(a, ax))
+zeropad(a::AxisArray, N, ax) = zeropad(a, N, axisdim(a, ax))
 zeropad(a::AxisArray, N) = AxisArray(zeropad(a.data, N), expand_axes(a, N)...)
 
 function _zeropad_all(a, N)
@@ -43,14 +43,16 @@ function _zeropad_dim(a, N, dim)
   zeros(eltype(a), newsize), Rdst
 end
 
-function expand_axis(ax::Axis{name,T}, N) where {name,T}
-  dx1 = ax.val[2]-ax.val[1]
-  dx2 = ax.val[end]-ax.val[end-1]
-  Axis{name}([range(ax.val[1]-N*dx1, step=dx1, length=N); ax.val; range(ax.val[end]+dx2, step=dx2, length=N)])
-end
-
+expand_axis(ax::Axis{name,T}, N) where {name,T} = Axis{name}(_expand_range(ax.val, N))
 expand_axes(a::AxisArray, N) = map(ax -> expand_axis(ax, N), AxisArrays.axes(a))
 expand_axes(a::AxisArray, N, dim::Int) = ntuple(n -> n == dim ? expand_axis(AxisArrays.axes(a,n),N) : AxisArrays.axes(a,n), Val(ndims(a)))
+
+function _expand_range(x, N)
+  dx1 = x[2]-x[1]
+  dx2 = x[end]-x[end-1]
+  [range(x[1]-N*dx1, step=dx1, length=N); x; range(x[end]+dx2, step=dx2, length=N)]
+end
+_expand_range(x::AbstractRange, N) = (dx = step(x); x[1]-N*dx:dx:x[end]+N*dx)
 
 
 """
