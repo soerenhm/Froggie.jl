@@ -77,6 +77,7 @@ function sample(a::AxisArray, ax::Axis{name,T}, N) where {name, T}
   AxisArray(b, axs...)
 end
 sample(a::AxisArray, dim::Int, N) = sample(a, AxisArrays.axes(a, dim), N)
+sample(a::AxisArray, ax::Type{<:Axis}, N) = sample(a, axisdim(a, ax), N)
 
 @noinline function _sample!(b, a, x, y, Ipre, Ipost)
   j = 2
